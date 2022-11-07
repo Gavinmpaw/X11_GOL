@@ -102,7 +102,7 @@ int main(int ac, char** av)
 	while(1)
 	{
 		// only attempt to process events if there is events waiting
-		// dont this way because XNextEvent is a blocking call and would cause issues 
+		// doing it this way because XNextEvent is a blocking call and would cause issues 
 		// with simulation timing
 		if(XPending(winData.display))
 		{
@@ -112,6 +112,14 @@ int main(int ac, char** av)
 				if(event.type == Expose)
 				{
 					XGetWindowAttributes(winData.display, winData.window, &winData.windowAttributes);
+				}
+
+				if(event.type == ButtonPress && !simData.running)
+				{
+					x = event.xbutton.x / (winData.windowAttributes.width/GRID_DIVISIONS);
+					y = event.xbutton.y / (winData.windowAttributes.height/GRID_DIVISIONS);
+
+					grid[x][y] = !grid[x][y];
 				}
 
 				if(event.type == KeyPress)
