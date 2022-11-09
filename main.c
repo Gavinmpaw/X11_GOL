@@ -5,11 +5,11 @@
 #include <time.h>
 
 // Initial window size
-#define WINDOW_HEIGHT 500
-#define WINDOW_WIDTH  500
+#define WINDOW_HEIGHT 1000
+#define WINDOW_WIDTH  1000
 
 // controls the number of cells both vertically and horizontally
-#define GRID_DIVISIONS 50
+#define GRID_DIVISIONS 100
 
 // boolean definitions
 #define FALSE	0
@@ -37,6 +37,7 @@ typedef struct XWinData
 	XColor red;
 	XColor green;
 	XColor blue;
+	XColor grey;
 }XWinData;
 
 // for holding data relivant to the simulation behind the scenes
@@ -104,6 +105,7 @@ int main(int ac, char** av)
 	XAllocNamedColor(winData.display, winData.colormap, "red", &winData.red, &winData.red);
 	XAllocNamedColor(winData.display, winData.colormap, "green", &winData.green, &winData.green);
 	XAllocNamedColor(winData.display, winData.colormap, "blue", &winData.blue, &winData.blue);
+	XAllocNamedColor(winData.display, winData.colormap, "lightGrey", &winData.grey, &winData.grey);
 
 	// make window visible
 	XMapWindow(winData.display, winData.window);
@@ -233,6 +235,14 @@ void redrawGrid(XWinData *winData, SimulationData simData)
 	// clear screen by temporarilly changing the foreground color to white and drawing over the whole window
 	XSetForeground(winData->display, winData->graphicsContext, WhitePixel(winData->display, winData->screen));
 	XFillRectangle(winData->display, winData->window, winData->graphicsContext, 0,0, winData->windowAttributes.width, winData->windowAttributes.height);
+	XSetForeground(winData->display, winData->graphicsContext, BlackPixel(winData->display, winData->screen));
+
+	XSetForeground(winData->display, winData->graphicsContext, winData->grey.pixel);
+	for(int i = 1; i < GRID_DIVISIONS; i++)
+	{
+		XDrawLine(winData->display, winData->window, winData->graphicsContext, i*(winData->windowAttributes.width/GRID_DIVISIONS), 0, i*(winData->windowAttributes.width/GRID_DIVISIONS), winData->windowAttributes.height);
+		XDrawLine(winData->display, winData->window, winData->graphicsContext, 0, i*(winData->windowAttributes.height/GRID_DIVISIONS), winData->windowAttributes.width, i*(winData->windowAttributes.height/GRID_DIVISIONS));
+	}
 	XSetForeground(winData->display, winData->graphicsContext, BlackPixel(winData->display, winData->screen));
 
 	// draw in every square of the grid based on the value contained in the associated 2D array
