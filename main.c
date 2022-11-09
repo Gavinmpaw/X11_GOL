@@ -105,7 +105,7 @@ int main(int ac, char** av)
 	XAllocNamedColor(winData.display, winData.colormap, "red", &winData.red, &winData.red);
 	XAllocNamedColor(winData.display, winData.colormap, "green", &winData.green, &winData.green);
 	XAllocNamedColor(winData.display, winData.colormap, "blue", &winData.blue, &winData.blue);
-	XAllocNamedColor(winData.display, winData.colormap, "lightGrey", &winData.grey, &winData.grey);
+	XAllocNamedColor(winData.display, winData.colormap, "gray92", &winData.grey, &winData.grey);
 
 	// make window visible
 	XMapWindow(winData.display, winData.window);
