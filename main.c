@@ -46,10 +46,17 @@ typedef struct SimulationData
 	int TPS;
 	int ticksFromStart;
 	clock_t lastTickTime;
+	int** mainGrid;
+	int** swapGrid;
 }SimulationData;
 
 // function to redraw the window when changes are made in the array or when the window is resized
-void redrawGrid(XWinData *winData, SimulationData simData, int grid[GRID_DIVISIONS][GRID_DIVISIONS]);
+void redrawGrid(XWinData *winData, SimulationData simData);
+void tickGridArray(SimulationData* simData);
+
+int sumAreaAroundPoint(int x, int y, int** grid);
+
+int** allocGrid(int w, int h);
 
 int main(int ac, char** av)
 {
@@ -57,7 +64,9 @@ int main(int ac, char** av)
 	SimulationData 	simData;
 	XEvent 			event;	
 	int x,y;
-	int grid[GRID_DIVISIONS][GRID_DIVISIONS] = {0};
+
+	simData.mainGrid = allocGrid(GRID_DIVISIONS, GRID_DIVISIONS);
+	simData.swapGrid = allocGrid(GRID_DIVISIONS, GRID_DIVISIONS);
 
 	simData.ticksFromStart = 0;
 	simData.TPS = INITIAL_TPS;
@@ -119,7 +128,7 @@ int main(int ac, char** av)
 					x = event.xbutton.x / (winData.windowAttributes.width/GRID_DIVISIONS);
 					y = event.xbutton.y / (winData.windowAttributes.height/GRID_DIVISIONS);
 
-					grid[x][y] = !grid[x][y];
+					simData.mainGrid[x][y] = !simData.mainGrid[x][y];
 				}
 
 				if(event.type == KeyPress)
@@ -140,8 +149,7 @@ int main(int ac, char** av)
 							//printf("Key Pressed %d\n", event.xkey.keycode); << for finding keycodes... disabled normally
 					}
 				}
-
-				redrawGrid(&winData, simData, grid);
+				redrawGrid(&winData, simData);
 		}
 		
 		// tick timer
@@ -149,7 +157,8 @@ int main(int ac, char** av)
 		{
 			simData.ticksFromStart += 1;
 			simData.lastTickTime = clock() / (CLOCKS_PER_SEC / 1000);
-			redrawGrid(&winData, simData, grid);
+			tickGridArray(&simData);	
+			redrawGrid(&winData, simData);
 		}
 	}	
 
@@ -157,8 +166,70 @@ int main(int ac, char** av)
 	return 0;
 }
 
-void redrawGrid(XWinData *winData, SimulationData simData, int grid[GRID_DIVISIONS][GRID_DIVISIONS])
+int** allocGrid(int w, int h)
 {
+	int** grid = calloc(w, sizeof(int*));
+	for(int i = 0; i < w; i++)
+	{
+		grid[i] = calloc(h, sizeof(int));
+	}
+	return grid;
+}
+
+void tickGridArray(SimulationData* simData)
+{
+	int sum;
+	for(int x = 0; x < GRID_DIVISIONS; x++)
+	{
+		for(int y = 0; y < GRID_DIVISIONS; y++)
+		{
+			sum = sumAreaAroundPoint(x, y, simData->mainGrid);
+
+			if(sum == 3)
+				simData->swapGrid[x][y] = 1;
+			else if(sum < 2 || sum > 3)
+				simData->swapGrid[x][y] = 0;
+			else
+				simData->swapGrid[x][y] = simData->mainGrid[x][y];
+		}
+	}
+	
+	int** tmp;
+	tmp = simData->mainGrid;
+	simData->mainGrid = simData->swapGrid;
+	simData->swapGrid = tmp;
+}
+
+int sumAreaAroundPoint(int x, int y, int** grid)
+{
+	int sum = 0;
+	for(int i = -1; i <= 1; i++)
+	{
+		for(int j = -1; j <= 1; j++)
+		{
+			if((i != 0 || j != 0) 	&&
+			   x+i >= 0 && y+j >= 0 &&
+			   x+i < GRID_DIVISIONS && 
+			   y+j < GRID_DIVISIONS)
+			{
+				sum += grid[x+i][y+j];
+			}
+			else if((i != 0 || j != 0))
+			{
+				// this section is my edge handling rule, not part of the actual game of life
+				// due to an actual infinite grid being imposible to impliment...
+				// I simply chose to do this as a way to break stable patterns near edges (stop gliders from becoming static blocks)
+				sum -= grid[x][y];
+			}		
+		}
+	}
+	return sum;
+}
+
+void redrawGrid(XWinData *winData, SimulationData simData)
+{
+	int** grid = simData.mainGrid;
+
 	// clear screen by temporarilly changing the foreground color to white and drawing over the whole window
 	XSetForeground(winData->display, winData->graphicsContext, WhitePixel(winData->display, winData->screen));
 	XFillRectangle(winData->display, winData->window, winData->graphicsContext, 0,0, winData->windowAttributes.width, winData->windowAttributes.height);
