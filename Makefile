@@ -1,8 +1,8 @@
-main: main.c
+all: main.c
 	@gcc main.c -lX11 -o GOL
 
 run:
-	@make main
+	@make all
 	@./GOL
 
 clean:

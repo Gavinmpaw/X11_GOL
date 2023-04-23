@@ -40,7 +40,7 @@ typedef struct XWinData
 	XColor grey;
 }XWinData;
 
-// for holding data relivant to the simulation behind the scenes
+// for holding data relevant to the simulation behind the scenes
 typedef struct SimulationData
 {
 	int running;
