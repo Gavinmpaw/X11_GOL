@@ -43,11 +43,29 @@ bwGridWinData* createBlackWhiteGridWindow(int h, int w, char* name)
     newWindow->windowData.window =
             XCreateSimpleWindow(newWindow->windowData.display,
                                 RootWindow(newWindow->windowData.display, newWindow->windowData.screen),
-                                0, 0, 												// window starting x and y location
-                                DEFAULT_WIN_HEIGHT, DEFAULT_WIN_WIDTH, 						// window starting height and width values
-                                0, 												// window border thickness
+                                0, 0, 												                            // window starting x and y location
+                                DEFAULT_WIN_HEIGHT, DEFAULT_WIN_WIDTH, 						                    // window starting height and width values
+                                0, 												                                // window border thickness
                                 BlackPixel(newWindow->windowData.display, newWindow->windowData.screen), 		// foreground color
                                 WhitePixel(newWindow->windowData.display, newWindow->windowData.screen));		// background color
+                                
+    // setting window name, for style points obviously	
+    XStoreName(newWindow->windowData.display, newWindow->windowData.window, name);
+
+    // we want to process clicks and keyboard input, as well as when the window becomes visible or is resized
+    XSelectInput(newWindow->windowData.display, newWindow->windowData.window, ExposureMask | KeyPressMask | ButtonPressMask);
+
+    newWindow->windowData.graphicsContext = XCreateGC(newWindow->windowData.display, newWindow->windowData.window, 0, NULL);
+
+    // getting color set up in window data structure, XAllocNamedColor can return an error value... which I am choosing to ignore for now
+    newWindow->windowData.colormap = DefaultColormap(newWindow->windowData.display, newWindow->windowData.screen);
+    XAllocNamedColor(newWindow->windowData.display, newWindow->windowData.colormap, "red", &newWindow->windowData.red, &newWindow->windowData.red);
+    XAllocNamedColor(newWindow->windowData.display, newWindow->windowData.colormap, "green", &newWindow->windowData.green, &newWindow->windowData.green);
+    XAllocNamedColor(newWindow->windowData.display, newWindow->windowData.colormap, "blue", &newWindow->windowData.blue, &newWindow->windowData.blue);
+    XAllocNamedColor(newWindow->windowData.display, newWindow->windowData.colormap, "gray92", &newWindow->windowData.grey, &newWindow->windowData.grey);
+
+    // make window visible
+    XMapWindow(newWindow->windowData.display, newWindow->windowData.window);
 
     return newWindow;
 }

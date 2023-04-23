@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "windowManagement.c"
 
 // Initial window size
 #define WINDOW_HEIGHT 1000
@@ -24,21 +25,21 @@
 #define INITIAL_TPS 2
 
 // for holding all data regarding the rendering of the grid in the window as well as the window itself
-typedef struct XWinData
-{
-	Display *display;
-	Window window;
-	GC graphicsContext;
-	XWindowAttributes windowAttributes;
-	int screen;
-
-	// color setup, mostly for telemetry type text drawn in window
-	Colormap colormap;
-	XColor red;
-	XColor green;
-	XColor blue;
-	XColor grey;
-}XWinData;
+//typedef struct XWinData
+//{
+//	Display *display;
+//	Window window;
+//	GC graphicsContext;
+//	XWindowAttributes windowAttributes;
+//	int screen;
+//
+//	// color setup, mostly for telemetry type text drawn in window
+//	Colormap colormap;
+//	XColor red;
+//	XColor green;
+//	XColor blue;
+//	XColor grey;
+//}XWinData;
 
 // for holding data relevant to the simulation behind the scenes
 typedef struct SimulationData
@@ -61,110 +62,112 @@ int** allocGrid(int w, int h);
 
 int main(int ac, char** av)
 {
-	XWinData 		winData;
-	SimulationData 	simData;
-	XEvent 			event;	
-	int x,y;
+    bwGridWinData* mainWindow = createBlackWhiteGridWindow(5,5,"Game of Life");
 
-	simData.mainGrid = allocGrid(GRID_DIVISIONS, GRID_DIVISIONS);
-	simData.swapGrid = allocGrid(GRID_DIVISIONS, GRID_DIVISIONS);
-
-	simData.ticksFromStart = 0;
-	simData.TPS = INITIAL_TPS;
-	simData.running = FALSE;
-	simData.lastTickTime = clock() / (CLOCKS_PER_SEC / 1000);
-
-	winData.display = XOpenDisplay(NULL);
-	if(winData.display == NULL)
-	{
-		fprintf(stderr, "Failed to open display\n");
-		exit(1);
-	}
-
-
-	winData.screen = DefaultScreen(winData.display);
-
-	winData.window = XCreateSimpleWindow(winData.display, 							
-										 RootWindow(winData.display, winData.screen), 
-										 0, 0, 												// window starting x and y location
-										 WINDOW_HEIGHT, WINDOW_WIDTH, 						// window starting height and width values
-										 0, 												// window border thickness
-										 BlackPixel(winData.display, winData.screen), 		// foreground color
-										 WhitePixel(winData.display, winData.screen));		// background color
-	
-	// setting window name, for style points obviously	
-	XStoreName(winData.display, winData.window, "Game of Life");
-
-	// we want to process clicks and keyboard input, as well as when the window becomes visible or is resized
-	XSelectInput(winData.display, winData.window, ExposureMask | KeyPressMask | ButtonPressMask);
-
-	winData.graphicsContext = XCreateGC(winData.display, winData.window, 0, NULL);
-
-	// getting color set up in window data structure, XAllocNamedColor can return an error value... which I am choosing to ignore for now
-	winData.colormap = DefaultColormap(winData.display, winData.screen);
-	XAllocNamedColor(winData.display, winData.colormap, "red", &winData.red, &winData.red);
-	XAllocNamedColor(winData.display, winData.colormap, "green", &winData.green, &winData.green);
-	XAllocNamedColor(winData.display, winData.colormap, "blue", &winData.blue, &winData.blue);
-	XAllocNamedColor(winData.display, winData.colormap, "gray92", &winData.grey, &winData.grey);
-
-	// make window visible
-	XMapWindow(winData.display, winData.window);
+//	XWinData 		winData;
+//	SimulationData 	simData;
+	XEvent 			event;
+//	int x,y;
+//
+//	simData.mainGrid = allocGrid(GRID_DIVISIONS, GRID_DIVISIONS);
+//	simData.swapGrid = allocGrid(GRID_DIVISIONS, GRID_DIVISIONS);
+//
+//	simData.ticksFromStart = 0;
+//	simData.TPS = INITIAL_TPS;
+//	simData.running = FALSE;
+//	simData.lastTickTime = clock() / (CLOCKS_PER_SEC / 1000);
+//
+//	winData.display = XOpenDisplay(NULL);
+//	if(winData.display == NULL)
+//	{
+//		fprintf(stderr, "Failed to open display\n");
+//		exit(1);
+//	}
+//
+//
+//	winData.screen = DefaultScreen(winData.display);
+//
+//	winData.window = XCreateSimpleWindow(winData.display,
+//										 RootWindow(winData.display, winData.screen),
+//										 0, 0, 												// window starting x and y location
+//										 WINDOW_HEIGHT, WINDOW_WIDTH, 						// window starting height and width values
+//										 0, 												// window border thickness
+//										 BlackPixel(winData.display, winData.screen), 		// foreground color
+//										 WhitePixel(winData.display, winData.screen));		// background color
+//
+//	// setting window name, for style points obviously
+//	XStoreName(winData.display, winData.window, "Game of Life");
+//
+//	// we want to process clicks and keyboard input, as well as when the window becomes visible or is resized
+//	XSelectInput(winData.display, winData.window, ExposureMask | KeyPressMask | ButtonPressMask);
+//
+//	winData.graphicsContext = XCreateGC(winData.display, winData.window, 0, NULL);
+//
+//	// getting color set up in window data structure, XAllocNamedColor can return an error value... which I am choosing to ignore for now
+//	winData.colormap = DefaultColormap(winData.display, winData.screen);
+//	XAllocNamedColor(winData.display, winData.colormap, "red", &winData.red, &winData.red);
+//	XAllocNamedColor(winData.display, winData.colormap, "green", &winData.green, &winData.green);
+//	XAllocNamedColor(winData.display, winData.colormap, "blue", &winData.blue, &winData.blue);
+//	XAllocNamedColor(winData.display, winData.colormap, "gray92", &winData.grey, &winData.grey);
+//
+//	// make window visible
+//	XMapWindow(winData.display, winData.window);
 
 	while(1)
 	{
 		// only attempt to process events if there is events waiting
-		// doing it this way because XNextEvent is a blocking call and would cause issues 
+		// doing it this way because XNextEvent is a blocking call and would cause issues
 		// with simulation timing
-		if(XPending(winData.display))
+		if(XPending(mainWindow->windowData.display))
 		{
-				XNextEvent(winData.display, &event);
+				XNextEvent(mainWindow->windowData.display, &event);
 
 				// window resize or reveal, we basically just want to update the window data and redraw the whole thing
 				if(event.type == Expose)
 				{
-					XGetWindowAttributes(winData.display, winData.window, &winData.windowAttributes);
+					XGetWindowAttributes(mainWindow->windowData.display, mainWindow->windowData.window, &mainWindow->windowData.windowAttributes);
 				}
 
-				if(event.type == ButtonPress && !simData.running)
-				{
-					x = event.xbutton.x / (winData.windowAttributes.width/GRID_DIVISIONS);
-					y = event.xbutton.y / (winData.windowAttributes.height/GRID_DIVISIONS);
+//				if(event.type == ButtonPress && !simData.running)
+//				{
+//					x = event.xbutton.x / (winData.windowAttributes.width/GRID_DIVISIONS);
+//					y = event.xbutton.y / (winData.windowAttributes.height/GRID_DIVISIONS);
+//
+//					simData.mainGrid[x][y] = !simData.mainGrid[x][y];
+//				}
 
-					simData.mainGrid[x][y] = !simData.mainGrid[x][y];
-				}
-
-				if(event.type == KeyPress)
-				{
-					switch(event.xkey.keycode)
-					{
-						case KEY_PAUSE:
-							simData.running = !simData.running;
-							break;
-						case KEY_INCREASE:
-							simData.TPS++;
-							break;
-						case KEY_DECREASE:
-							if(simData.TPS > 1)
-								simData.TPS--;
-							break;
-						default:
-							//printf("Key Pressed %d\n", event.xkey.keycode); << for finding keycodes... disabled normally
-					}
-				}
-				redrawGrid(&winData, simData);
+//				if(event.type == KeyPress)
+//				{
+//					switch(event.xkey.keycode)
+//					{
+//						case KEY_PAUSE:
+//							simData.running = !simData.running;
+//							break;
+//						case KEY_INCREASE:
+//							simData.TPS++;
+//							break;
+//						case KEY_DECREASE:
+//							if(simData.TPS > 1)
+//								simData.TPS--;
+//							break;
+//						default:
+//							//printf("Key Pressed %d\n", event.xkey.keycode); << for finding keycodes... disabled normally
+//					}
+//				}
+//				redrawGrid(&winData, simData);
 		}
-		
-		// tick timer
-		if((clock() / (CLOCKS_PER_SEC / 1000)) - simData.lastTickTime > 1000/simData.TPS && simData.running)
-		{
-			simData.ticksFromStart += 1;
-			simData.lastTickTime = clock() / (CLOCKS_PER_SEC / 1000);
-			tickGridArray(&simData);	
-			redrawGrid(&winData, simData);
-		}
-	}	
 
-	XCloseDisplay(winData.display);
+//		// tick timer
+//		if((clock() / (CLOCKS_PER_SEC / 1000)) - simData.lastTickTime > 1000/simData.TPS && simData.running)
+//		{
+//			simData.ticksFromStart += 1;
+//			simData.lastTickTime = clock() / (CLOCKS_PER_SEC / 1000);
+//			tickGridArray(&simData);
+//			redrawGrid(&winData, simData);
+//		}
+	}
+
+	//XCloseDisplay(winData.display);
 	return 0;
 }
 
