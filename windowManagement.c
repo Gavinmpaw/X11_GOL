@@ -40,6 +40,8 @@ bwGridWinData* createBlackWhiteGridWindow(int h, int w, char* name)
 
     newWindow->windowData.screen = DefaultScreen(newWindow->windowData.display);
 
+    // creating the window itself, also sets some basic info such as the bg and foreground colors, scale, etc
+    // colors other than the BG and FG colors are usable once a color map is defined later on
     newWindow->windowData.window =
             XCreateSimpleWindow(newWindow->windowData.display,
                                 RootWindow(newWindow->windowData.display, newWindow->windowData.screen),
@@ -55,17 +57,21 @@ bwGridWinData* createBlackWhiteGridWindow(int h, int w, char* name)
     // we want to process clicks and keyboard input, as well as when the window becomes visible or is resized
     XSelectInput(newWindow->windowData.display, newWindow->windowData.window, ExposureMask | KeyPressMask | ButtonPressMask);
 
+    // GC = Graphics context
     newWindow->windowData.graphicsContext = XCreateGC(newWindow->windowData.display, newWindow->windowData.window, 0, NULL);
 
-    // getting color set up in window data structure, XAllocNamedColor can return an error value... which I am choosing to ignore for now
+    // getting color set up in window data structure, XAllocNamedColor can return an error value... TODO, handle this
+    // TODO not sure this needs to be attached to the window itself given that it appears to be based on display and screen which will be shared
     newWindow->windowData.colormap = DefaultColormap(newWindow->windowData.display, newWindow->windowData.screen);
     XAllocNamedColor(newWindow->windowData.display, newWindow->windowData.colormap, "red", &newWindow->windowData.red, &newWindow->windowData.red);
     XAllocNamedColor(newWindow->windowData.display, newWindow->windowData.colormap, "green", &newWindow->windowData.green, &newWindow->windowData.green);
     XAllocNamedColor(newWindow->windowData.display, newWindow->windowData.colormap, "blue", &newWindow->windowData.blue, &newWindow->windowData.blue);
     XAllocNamedColor(newWindow->windowData.display, newWindow->windowData.colormap, "gray92", &newWindow->windowData.grey, &newWindow->windowData.grey);
 
-    // make window visible
+    // map window to screen, won't actually appear until first Expose event is handled
     XMapWindow(newWindow->windowData.display, newWindow->windowData.window);
+
+    //TODO, add grid creation to this...
 
     return newWindow;
 }
