@@ -70,18 +70,36 @@ XWinData* createNewWindow(int h, int w, char* name)
     return newWindow;
 }
 
+// not really needed... but makes it easier for me to read and compiler should just optimize it out
+// so here it stays
+void simpleDrawLine(XWinData* windowData, int32_t x1, int32_t y1, int32_t x2, int32_t y2)
+{
+    XDrawLine(windowData->display, windowData->window, windowData->graphicsContext,
+              x1, y1,
+              x2, y2);
+}
+
 // TODO, this function exhibits the same odd behavior on the right and bottom edges that the original did
 void drawEvenGrid(XWinData* windowData, int32_t divisions)
 {
-    // error checking
+    // error checking and correcting if needed (divisions <= 0 causes div by zero)
     if(divisions <= 0) divisions = DEFAULT_GRID_DIVISIONS;
-    for(int i = 1; i < divisions; i++)
+
+    int32_t height = windowData->windowAttributes.height;
+    int32_t width = windowData->windowAttributes.width;
+
+    int32_t vertical_gridSpacing = height / divisions;
+    int32_t horizontal_gridSpacing = width / divisions;
+
+    // TODO, adding one here looks nicer at the very least... by implying that the grid continues still a bit off though
+    for(int i = 1; i < divisions+1; i++)
     {
-        XDrawLine(windowData->display, windowData->window, windowData->graphicsContext,
-                  i*(windowData->windowAttributes.width / divisions), 0,
-                  i*(windowData->windowAttributes.width / divisions), windowData->windowAttributes.height);
-        XDrawLine(windowData->display, windowData->window, windowData->graphicsContext,
-                  0,i*(windowData->windowAttributes.height / divisions),
-                  windowData->windowAttributes.width, i*(windowData->windowAttributes.height / divisions));
+        simpleDrawLine(windowData,
+                       0,i * vertical_gridSpacing,
+                       width-1,i * vertical_gridSpacing);
+        simpleDrawLine(windowData,
+                       i * horizontal_gridSpacing, 0,
+                       i * horizontal_gridSpacing, height-1);
     }
 }
+
